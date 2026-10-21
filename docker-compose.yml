@@ -1,0 +1,78 @@
+services:
+  # ==========================================
+  # Service 1: Basis Data (MySQL 8.0)
+  # ==========================================
+  db:
+    image: mysql:8.0
+    container_name: kepl_mysql_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: db_uts_kepl
+      MYSQL_ROOT_PASSWORD: root_secret_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - kepl-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot_secret_password || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ==========================================
+  # Service 2: Backend (Laravel on FrankenPHP)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kepl_laravel_backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: local
+      APP_KEY: base64:+2NDYOz4kOURUCohZh5a1P7g7xt88kB5qCcAZFIGqsE=
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: db_uts_kepl
+      DB_USERNAME: root
+      DB_PASSWORD: root_secret_password
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kepl-network
+
+  # ==========================================
+  # Service 3: Frontend (Vue.js on Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kepl_vue_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - kepl-network
+
+# Named volume agar data basis data tidak hilang saat container dibuat ulang
+volumes:
+  db_data:
+    name: kepl_mysql_data
+
+# Jaringan bridge agar ketiga container saling menemukan lewat nama service
+networks:
+  kepl-network:
+    name: kepl_app_network
+    driver: bridge
