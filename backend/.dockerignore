@@ -1,7 +1,10 @@
 vendor
-.env
+.env*
+!.env.example
 .git
 .github
 tests
 node_modules
 npm-debug.log
+*.log
+storage/logs/*.log
