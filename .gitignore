@@ -1,3 +1,8 @@
+# Root Environment & Secrets
+.env
+.env.*
+!.env.example
+
 # Laravel Backend
 backend/vendor/
 backend/.env

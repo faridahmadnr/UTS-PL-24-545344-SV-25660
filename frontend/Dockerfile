@@ -9,8 +9,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy application source code and build for production
+# Copy application source code
 COPY . .
+
+# Set API base URL environment variable for Vite build
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+# Build for production
 RUN npm run build
 
 # ==========================================
@@ -21,7 +27,7 @@ FROM nginx:1.27-alpine AS runner
 # Copy compiled static assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration for Vue SPA routing
+# Copy custom Nginx configuration with reverse proxy and SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

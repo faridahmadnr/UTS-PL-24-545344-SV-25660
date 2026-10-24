@@ -1,6 +1,8 @@
 node_modules
 dist
+.env*
+!.env.example
 .git
 .github
-.env.local
 npm-debug.log
+*.log
