@@ -21,6 +21,11 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 # Copy the rest of the application source code
 COPY . .
 
+# Copy custom Caddyfile configuration and container entrypoint script
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Generate optimized autoload files
 RUN composer dump-autoload --optimize --no-dev
 
@@ -30,3 +35,5 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 # Expose port and configure FrankenPHP Caddy server
 ENV SERVER_NAME=":8000"
 EXPOSE 8000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
