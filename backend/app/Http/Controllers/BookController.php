@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
@@ -25,14 +27,43 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'title'       => 'required|string|max:255',
             'author'      => 'required|string|max:255',
             'year'        => 'required|integer|min:1900|max:2100',
             'description' => 'nullable|string',
         ]);
 
-        $book = Book::create($validated);
+        if ($validator->fails()) {
+            // Log Terstruktur: Validasi Gagal (Warning)
+            Log::warning('Validasi penambahan buku gagal: Atribut wajib tidak terpenuhi', [
+                'actor'         => $request->user()?->id ?? 'guest',
+                'client_ip'     => $request->ip(),
+                'action'        => 'create_book_validation_failed',
+                'status'        => 'rejected',
+                'failed_fields' => array_keys($validator->errors()->toArray()),
+                'reason'        => $validator->errors()->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Validasi data buku gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $book = Book::create($validator->validated());
+
+        // Log Terstruktur: Berhasil Menyimpan Data (Info)
+        Log::info('Berhasil menambahkan data buku baru ke katalog', [
+            'actor'     => $request->user()?->id ?? 'authenticated_user',
+            'client_ip' => $request->ip(),
+            'action'    => 'create_book',
+            'status'    => 'success',
+            'book_id'   => $book->id,
+            'title'     => $book->title,
+            'author'    => $book->author,
+            'year'      => $book->year,
+        ]);
 
         return response()->json([
             'message' => 'Buku berhasil ditambahkan',
