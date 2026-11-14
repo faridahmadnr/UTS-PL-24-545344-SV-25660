@@ -142,7 +142,7 @@
         "y": 8
       },
       "id": 3,
-      "title": "Berapa laju permintaan HTTP yang dilayani sistem per detik?",
+      "title": "Berapa laju permintaan HTTP yang diterima backend Laravel per detik?",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -176,8 +176,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (handler) (rate(prometheus_http_requests_total{handler=~\"/api/.*|/metrics|/targets\"}[1m]))",
-          "legendFormat": "{{handler}}",
+          "expr": "sum by (route) (rate(app_http_requests_total[1m]))",
+          "legendFormat": "{{route}}",
           "range": true,
           "refId": "A"
         }

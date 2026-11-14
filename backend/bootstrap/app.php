@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Jangan redirect ke rute login web saat request unauthenticated
         $middleware->redirectGuestsTo(fn () => null);
+        $middleware->append(\App\Http\Middleware\RecordPrometheusMetrics::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Seluruh endpoint dengan awalan api/* WAJIB selalu merespon JSON
