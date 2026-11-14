@@ -92,12 +92,99 @@ services:
         max-size: "10m"
         max-file: "3"
 
-# Named volume agar data basis data tidak hilang saat container dibuat ulang
+  # ==========================================
+  # Service 4: Prometheus (Time-Series Metric DB)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: kepl_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prom_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - kepl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Service 5: Grafana (Visualization Dashboard)
+  # ==========================================
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: kepl_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-FaridKepl2026!}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - kepl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Service 6: cAdvisor (Container Resource Metrics)
+  # ==========================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: kepl_cadvisor
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - kepl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Service 7: Node Exporter (Host System Metrics)
+  # ==========================================
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: kepl_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    networks:
+      - kepl-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volume untuk basis data dan persistensi metrik pemantau
 volumes:
   db_data:
     name: kepl_mysql_data
+  prom_data:
+    name: kepl_prometheus_data
+  grafana_data:
+    name: kepl_grafana_data
 
-# Jaringan bridge agar ketiga container saling menemukan lewat nama service
+# Jaringan bridge agar seluruh container saling menemukan lewat nama service
 networks:
   kepl-network:
     name: kepl_app_network

@@ -1,0 +1,22 @@
+groups:
+  - name: application_monitoring_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Layanan {{ $labels.instance }} (Job: {{ $labels.job }}) terdeteksi mati (DOWN)"
+          description: "Target {{ $labels.instance }} tidak merespons selama lebih dari 15 detik."
+          action: "1. Jalankan 'docker compose ps' untuk memeriksa container yang berhenti. 2. Periksa log penyebab error dengan 'docker compose logs {{ $labels.job }} --tail 50'. 3. Jalankan 'docker compose restart {{ $labels.job }}' untuk memulihkan layanan."
+
+      - alert: DatabaseConnectionLost
+        expr: app_database_up == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Koneksi basis data MySQL terputus pada aplikasi backend"
+          description: "Aplikasi backend gagal menghubungi container basis data MySQL selama lebih dari 15 detik."
+          action: "1. Periksa status container MySQL dengan 'docker compose ps'. 2. Jalankan 'docker compose logs db --tail 50'. 3. Pastikan port 3306 dan volume kepl_mysql_data berfungsi normal."
